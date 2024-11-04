@@ -167,12 +167,14 @@ def print_model_layers(model):
 
 
 def cal_metrics_fewshot(loader, net, device):
-    dict_tp = {}
-    dict_fp = {}
-    dict_fn = {}
+    dict_tp = {i: 0 for i in range(10)}
+    dict_fp = {i: 0 for i in range(10)}
+    dict_fn = {i: 0 for i in range(10)}
+
     num_batches = 0
 
     for query_images, query_targets, support_images, support_targets in loader:
+
         q = query_images.permute(1, 0, 2, 3, 4).to(device)
         s = support_images.permute(1, 0, 2, 3, 4).to(device)
         targets = query_targets.to(device)
@@ -181,24 +183,32 @@ def cal_metrics_fewshot(loader, net, device):
         for i in range(len(q)):
             scores, vec_q, vec_s = net(q[i], s)
             scores = scores.float()
-            target = targets[i].long()
+            target = targets[i].long()   
             if torch.argmax(scores) == target:
-                dict_tp[target.item()] += 1
+                dict_tp[int(target)] += 1
             else:
-                dict_fp[target.item()] += 1
-                dict_fn[torch.argmax(scores).item()] += 1
+                dict_fp[int(target)] += 1
+                dict_fn[int(torch.argmax(scores))] += 1
             num_batches += 1
-
 
     precision_dict = {}
     recall_dict = {}
-    f1_dict = {}    
+    f1_dict = {}
 
-    for i in target.unique():
-        i = int(i)
+
+    print("TP:", dict_tp)
+    print("FP:", dict_fp)
+    print("FN:", dict_fn)
+
+    for i in dict_tp.keys():
         precision_dict[i] = dict_tp[i] / (dict_tp[i] + dict_fp[i])
         recall_dict[i] = dict_tp[i] / (dict_tp[i] + dict_fn[i])
-        f1_dict[i] = 2 * (precision_dict[i] * recall_dict[i]) / (precision_dict[i] + recall_dict[i])
+        f1_dict[i] = 2 * (precision_dict[i] * recall_dict[i]) / (precision_dict[i] + recall_dict[i] + 1e-6)
+
+    print("Precision:", precision_dict)
+    print("Recall:", recall_dict)
+    print("F1:", f1_dict)
+
 
     precision = sum(precision_dict.values()) / len(precision_dict)
     recall = sum(recall_dict.values()) / len(recall_dict)     

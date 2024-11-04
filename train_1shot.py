@@ -14,7 +14,8 @@ import os
 from HUST_bearing.HUST_dataset import HUSTbearing
 from dataloader.dataloader import FewshotDataset
 from torch.utils.data import DataLoader
-from net.new_proposed import MainNet, Baseline
+# from net.new_proposed import MainNet, Baseline
+from survey_net.covamnet import CovarianceNet_64, CovaBlock
 from sklearn.metrics import confusion_matrix
 import argparse
 import torch.nn as nn
@@ -39,8 +40,8 @@ parser.add_argument('--training_samples_CWRU', type=int, default=30, help='Numbe
 parser.add_argument('--training_samples_PDB', type=int, default=195, help='Number of training samples for PDB')
 parser.add_argument('--training_samples_HUST', type=int, default=168, help='Number of training samples for HUST_bearing')
 parser.add_argument('--model_name', type=str, help='Model name')
-parser.add_argument('--episode_num_train', type=int, default=130, help='Number of training episodes')
-parser.add_argument('--episode_num_test', type=int, default=150, help='Number of testing episodes')
+parser.add_argument('--episode_num_train', type=int, default=10, help='Number of training episodes')
+parser.add_argument('--episode_num_test', type=int, default=15, help='Number of testing episodes')
 parser.add_argument('--way_num_CWRU', type=int, default=10, help='Number of classes for CWRU')
 parser.add_argument('--noise_DB', type=str, default=None, help='Noise database')
 parser.add_argument('--way_num_PDB', type=int, default=13, help='Number of classes for PDB')
@@ -55,7 +56,7 @@ parser.add_argument('--gamma', type=float, default=0.1)
 parser.add_argument('--num_epochs', type=int, default=100, help='Number of epochs')
 parser.add_argument('--loss1', default=ContrastiveLoss())
 parser.add_argument('--loss2', default=nn.CrossEntropyLoss())
-parser.add_argument('--data_path', default="/content/drive/MyDrive/Bearing_Faults_CovaMNET/HUST bearing dataset/", help="data path")
+parser.add_argument('--data_path', default="../new_bfd/CWRU/", help="data path")
 parser.add_argument('--cfs_matrix', action='store_false', help="Print confusion matrix")
 parser.add_argument('--train_mode', action='store_false', help="Select train mode")
 parser.add_argument('--shot_num', type=int, default=1, help='Number of samples per class')
@@ -78,7 +79,8 @@ if args.dataset == 'CWRU':
     test_data_CWRU = test_data_CWRU.reshape([750,4096])
 
     if args.noise_DB != None:
-        snr_dB = args.noise_DB
+        # snr_dB = args.noise_DB
+        snr_dB = float(args.noise_DB)
         data.add_noise_to_test_data(snr_dB, 0.001)
         noisy_test_data = data.X_test_noisy.reshape([750,4096])
 
@@ -275,43 +277,44 @@ def train_and_test_model(net,
 seed_func()
 print("train or val:")
 if args.train_mode:
-  net = MainNet()
-  net = net.to(args.device)
-  print('training.........................!!')
-  if args.dataset == 'CWRU':
-    _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
-                        train_dataloader = train_dataloader_CWRU,
-                        test_loader = test_dataloader_CWRU,
-                        training_samples = args.training_samples_CWRU,
-                        num_epochs = args.num_epochs,
-                        lr = args.lr,
-                        loss1 = args.loss1,
-                        path_weight = args.path_weights,
-                        num_samples = args.training_samples_CWRU)
-  elif args.dataset == 'PDB':
-    _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
-                        train_dataloader = train_dataloader_PDB,
-                        test_loader = test_dataloader_PDB,
-                        training_samples = args.training_samples_PDB,
-                        num_epochs = args.num_epochs,
-                        lr = args.lr,
-                        loss1 = args.loss1,
-                        path_weight = args.path_weights,
-                        num_samples = args.training_samples_PDB)
-    
-  elif args.dataset == 'HUST_bearing':
-    print("Training with HUST bearing dataset....")
-    _,_,model_name, acc, vec_q, vec_s = train_and_test_model(net,
-                        train_dataloader = train_dataloader_HUST,
-                        test_loader = test_dataloader_HUST,
-                        training_samples = args.training_samples_HUST,
-                        num_epochs = args.num_epochs,
-                        lr = args.lr,
-                        loss1 = args.loss1,
-                        path_weight = args.path_weights,
-                        num_samples = args.training_samples_HUST)    
+#   net = MainNet()
+    net = CovarianceNet_64()
+    net = net.to(args.device)
+    print('training.........................!!')
+    if args.dataset == 'CWRU':
+        _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
+                            train_dataloader = train_dataloader_CWRU,
+                            test_loader = test_dataloader_CWRU,
+                            training_samples = args.training_samples_CWRU,
+                            num_epochs = args.num_epochs,
+                            lr = args.lr,
+                            loss1 = args.loss1,
+                            path_weight = args.path_weights,
+                            num_samples = args.training_samples_CWRU)
+    elif args.dataset == 'PDB':
+        _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
+                            train_dataloader = train_dataloader_PDB,
+                            test_loader = test_dataloader_PDB,
+                            training_samples = args.training_samples_PDB,
+                            num_epochs = args.num_epochs,
+                            lr = args.lr,
+                            loss1 = args.loss1,
+                            path_weight = args.path_weights,
+                            num_samples = args.training_samples_PDB)
 
-  print('end training...................!!')
+    elif args.dataset == 'HUST_bearing':
+        print("Training with HUST bearing dataset....")
+        _,_,model_name, acc, vec_q, vec_s = train_and_test_model(net,
+                            train_dataloader = train_dataloader_HUST,
+                            test_loader = test_dataloader_HUST,
+                            training_samples = args.training_samples_HUST,
+                            num_epochs = args.num_epochs,
+                            lr = args.lr,
+                            loss1 = args.loss1,
+                            path_weight = args.path_weights,
+                            num_samples = args.training_samples_HUST)    
+
+    print('end training...................!!')
 
 if args.cfs_matrix:
     print("validating...")
@@ -335,7 +338,8 @@ if args.cfs_matrix:
 }
 
 
-    net = MainNet()
+    # net = MainNet()
+    net = CovarianceNet_64()    
   
     saved_weights_path = f"{args.path_weights}{model_name}"
     net = torch.load(saved_weights_path)
