@@ -160,3 +160,36 @@ def print_model_layers(model):
             print(module)
             print("-" * 70)
     print("=" * 70)
+
+
+
+ #-------------------evaluation metrics-------------------------------------
+
+
+def cal_metrics_fewshot(loader, net, device):
+    true_label = 0
+    false_positive = 0
+    false_negative = 0
+    num_batches = 0
+
+    for query_images, query_targets, support_images, support_targets in loader:
+        q = query_images.permute(1, 0, 2, 3, 4).to(device)
+        s = support_images.permute(1, 0, 2, 3, 4).to(device)
+        targets = query_targets.to(device)
+        targets = targets.permute(1,0)
+
+        for i in range(len(q)):
+            scores, vec_q, vec_s = net(q[i], s)
+            scores = scores.float()
+            target = targets[i].long()
+            true_label += 1 if torch.argmax(scores) == target else 0
+            false_positive += 1 if torch.argmax(scores) != target and target == 0 else 0
+            false_negative += 1 if torch.argmax(scores) != target and target == 1 else 0
+            num_batches += 1
+
+
+    presision = true_label/(true_label + false_positive)
+    recall = true_label/(true_label + false_negative)
+    accuracy = true_label/num_batches    
+
+    return accuracy, presision, recall 
