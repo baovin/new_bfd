@@ -167,9 +167,9 @@ def print_model_layers(model):
 
 
 def cal_metrics_fewshot(loader, net, device):
-    true_label = 0
-    false_positive = 0
-    false_negative = 0
+    dict_tp = {}
+    dict_fp = {}
+    dict_fn = {}
     num_batches = 0
 
     for query_images, query_targets, support_images, support_targets in loader:
@@ -182,14 +182,25 @@ def cal_metrics_fewshot(loader, net, device):
             scores, vec_q, vec_s = net(q[i], s)
             scores = scores.float()
             target = targets[i].long()
-            true_label += 1 if torch.argmax(scores) == target else 0
-            false_positive += 1 if torch.argmax(scores) != target and target == 0 else 0
-            false_negative += 1 if torch.argmax(scores) != target and target == 1 else 0
+            if torch.argmax(scores) == target:
+                dict_tp[target.item()] += 1
+            else:
+                dict_fp[target.item()] += 1
+                dict_fn[torch.argmax(scores).item()] += 1
             num_batches += 1
 
 
-    presision = true_label/(true_label + false_positive)
-    recall = true_label/(true_label + false_negative)
-    accuracy = true_label/num_batches    
+    precision_dict = {}
+    recall_dict = {}
+    f1_dict = {}    
 
-    return accuracy, presision, recall 
+    for i in target.unique():
+        i = int(i)
+        precision_dict[i] = dict_tp[i] / (dict_tp[i] + dict_fp[i])
+        recall_dict[i] = dict_tp[i] / (dict_tp[i] + dict_fn[i])
+        f1_dict[i] = 2 * (precision_dict[i] * recall_dict[i]) / (precision_dict[i] + recall_dict[i])
+
+    precision = sum(precision_dict.values()) / len(precision_dict)
+    recall = sum(recall_dict.values()) / len(recall_dict)     
+    accuracy = sum(dict_tp.values()) / num_batches
+    return accuracy, precision, recall 
