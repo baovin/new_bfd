@@ -51,7 +51,7 @@ def get_class(exp,fault):
 
 
 class CWRU:
-    def __init__(self, split ,exps, rpms, length):
+    def __init__(self, split ,exps, rpms, length, data_path):
         self.split = split
         for exp in exps:
             if exp not in ('12DriveEndFault', '12FanEndFault', '48DriveEndFault'):
@@ -62,7 +62,8 @@ class CWRU:
                 print("wrong rpm value: {}".format(rpm))
                 return
         # root directory of all data
-        rdir = os.path.join('Datasets/CWRU')
+        # rdir = os.path.join('Datasets/CWRU')
+        rdir = os.path.join(data_path)
         # print(rdir,exp,rpm)
 
         fmeta = os.path.join(os.path.dirname('__file__'), 'metadata.txt')
