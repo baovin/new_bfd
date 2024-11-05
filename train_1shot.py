@@ -79,8 +79,8 @@ if args.dataset == 'CWRU':
     test_data_CWRU = test_data_CWRU.reshape([750,4096])
 
     if args.noise_DB != None:
-        # snr_dB = args.noise_DB
-        snr_dB = float(args.noise_DB)
+        snr_dB = args.noise_DB
+        # snr_dB = float(args.noise_DB)
         data.add_noise_to_test_data(snr_dB, 0.001)
         noisy_test_data = data.X_test_noisy.reshape([750,4096])
 
