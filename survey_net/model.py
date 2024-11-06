@@ -42,7 +42,7 @@ class RelationNet(nn.Module):
         output = input.unsqueeze(1) + supports
         output = torch.sum(output, dim=1)
 
-        return output
+        return output, output, output
 #--------------------MatchingNet-----------------------------------------------------------------------
 # https://github.com/gitabcworld/MatchingNetworks
 class MatchingNet(nn.Module):
@@ -84,7 +84,7 @@ class MatchingNet(nn.Module):
         output = query.unsqueeze(1) + supports
         output = torch.sum(output, dim=1)
 
-        return output
+        return output, output, output
 #--------------------ProtoNet--------------------------------------------------------------------------
 # https://github.com/orobix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/tree/master
 class ProtoNet(nn.Module):
@@ -112,7 +112,7 @@ class ProtoNet(nn.Module):
         x = x.unsqueeze(1).expand(n, m, d)
         y = y.unsqueeze(0).expand(n, m, d)
 
-        return torch.pow(x - y, 2).sum(2)
+        return torch.pow(x - y, 2).sum(2), torch.pow(x - y, 2).sum(2), torch.pow(x - y, 2).sum(2)
     
 #--------------------Cosine classifer------------------------------------------------------------------
 # https://github.com/vinuni-vishc/Few-Shot-Cosine-Transformer
@@ -144,7 +144,7 @@ class CosineClassifier(nn.Module):
         logits = similarities.view(-1, self.num_classes)
         probabilities = F.softmax(logits, dim=1)
 
-        return probabilities
+        return probabilities, probabilities, probabilities
 #--------------------CAN-------------------------------------------------------------------------------
 # https://github.com/blue-blue272/fewshot-CAN
 
@@ -201,7 +201,7 @@ class CovarianceNet_64(nn.Module):
 		x = self.classifier(x)    # get Batch*1*num_classes
 		x = x.squeeze(1)          # get Batch*num_classes
 
-		return x
+		return x, x, x
 
 class CovaBlock(nn.Module):
 	def __init__(self):
@@ -419,7 +419,7 @@ class SA_CovaMNet(nn.Module):
 		x = self.classifier(x)    # get Batch*1*num_classes
 		x = x.squeeze(1)          # get Batch*num_classes
 
-		return x
+		return x, x, x
 
 
     
@@ -535,7 +535,7 @@ class Encoder_Decoder(nn.Module):
             output.append(out)
 
 
-        return output                                         # [Num_class x (B, 1)]
+        return output                                        # [Num_class x (B, 1)]
 
 
 #---------------------------QS_Former----------------------------------------------------------
@@ -624,5 +624,5 @@ class QS_Former(nn.Module):
         
         out = out_u + out_l.cuda()
         
-        return out
+        return out, out, out
 
