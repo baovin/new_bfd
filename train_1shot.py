@@ -282,8 +282,14 @@ print("train or val:")
 if args.train_mode:
 #   net = MainNet()
     # net = CovarianceNet_64()
+    if args.dataset == 'CWRU':
+        num_classes = args.way_num_CWRU
+    elif args.dataset == 'HUST_bearing':
+        num_classes = args.way_num_HUST
+
+
     model_name = ['QS_Former', 'RelationNet', 'MatchingNet', 'ProtoNet', 'CosineClassifier', 'SA_CovaMNet', 'CovarianceNet_64', 'MFNet', 'EnsembleNet']
-    models = [QS_Former(), RelationNet(), MatchingNet(), ProtoNet(), CosineClassifier(), SA_CovaMNet(), CovarianceNet_64(), MFNet(), Ensemble_Net()]
+    models = [QS_Former(), RelationNet(input_size=1, hidden_size=64, num_classes=num_classes), MatchingNet(input_size=1, num_classes=num_classes), ProtoNet(), CosineClassifier(num_classes=num_classes), SA_CovaMNet(num_classes=num_classes), CovarianceNet_64(num_classes=num_classes), MFNet(num_classes=num_classes), Ensemble_Net()]
     
     for i, net in enumerate(models):
         net = net.to(args.device)
