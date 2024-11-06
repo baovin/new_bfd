@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 # from survey_net.covamnet import CovarianceNet_64, CovaBlock
 from survey_net.model import QS_Former, RelationNet, MatchingNet, ProtoNet, CosineClassifier, SA_CovaMNet, CovarianceNet_64
 from survey_net.mf_net import MFNet
-from survey_net.ensemble_net import EnsembleNet
+from survey_net.ensemble_net import Ensemble_Net
 from sklearn.metrics import confusion_matrix
 import argparse
 import torch.nn as nn
@@ -46,7 +46,7 @@ parser.add_argument('--model_name', type=str, help='Model name')
 parser.add_argument('--episode_num_train', type=int, default=10, help='Number of training episodes')
 parser.add_argument('--episode_num_test', type=int, default=15, help='Number of testing episodes')
 parser.add_argument('--way_num_CWRU', type=int, default=10, help='Number of classes for CWRU')
-parser.add_argument('--noise_DB', type=str, default=None, help='Noise database')
+parser.add_argument('--noise_DB', type=float, default=None, help='Noise database')
 parser.add_argument('--way_num_PDB', type=int, default=13, help='Number of classes for PDB')
 parser.add_argument('--spectrum', action='store_true', help='Use spectrum')
 parser.add_argument('--way_num_HUST', type=int, default=7, help='Number of classes for HUST')
@@ -283,7 +283,7 @@ if args.train_mode:
 #   net = MainNet()
     # net = CovarianceNet_64()
     model_name = ['QS_Former', 'RelationNet', 'MatchingNet', 'ProtoNet', 'CosineClassifier', 'SA_CovaMNet', 'CovarianceNet_64', 'MFNet', 'EnsembleNet']
-    models = [QS_Former(), RelationNet(), MatchingNet(), ProtoNet(), CosineClassifier(), SA_CovaMNet(), CovarianceNet_64(), MFNet(), EnsembleNet()]
+    models = [QS_Former(), RelationNet(), MatchingNet(), ProtoNet(), CosineClassifier(), SA_CovaMNet(), CovarianceNet_64(), MFNet(), Ensemble_Net()]
     
     for i, net in enumerate(models):
         net = net.to(args.device)
