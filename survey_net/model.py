@@ -626,3 +626,14 @@ class QS_Former(nn.Module):
         
         return out, out, out
 
+if __name__ == '__main__':
+    test_input = torch.rand(1,1,64,64)
+    support = torch.rand(10,1,1,64,64)
+    
+    model = RelationNet(1,64,10).cuda()
+    # model = QS_Former().cuda()
+    # model = SA_CovaMNet().cuda()
+    x, x, x = model(test_input.cuda(), support.cuda())
+
+    print(x.shape)
+    print(x)

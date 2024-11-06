@@ -92,11 +92,9 @@ class MFNet(nn.Module):
     def forward(self, input1, input2):
         #q = self.features(input1)
         q = self.MHSA(self.mixer(input1))
-        print(q.shape)
         S = []
         for i in range(len(input2)):
             features = self.mixer(input2[i])
-            print(features.shape)
             S.append(self.MHSA(features))
         x = self.covariance(q, S)
 
@@ -105,7 +103,7 @@ class MFNet(nn.Module):
         x = x.squeeze(1)
 
 
-        return x
+        return x, x, x
 
 #-----------------------MF-Net-----------------------------------------------#
 
