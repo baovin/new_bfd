@@ -15,7 +15,10 @@ from HUST_bearing.HUST_dataset import HUSTbearing
 from dataloader.dataloader import FewshotDataset
 from torch.utils.data import DataLoader
 # from net.new_proposed import MainNet, Baseline
-from survey_net.covamnet import CovarianceNet_64, CovaBlock
+# from survey_net.covamnet import CovarianceNet_64, CovaBlock
+from survey_net.model import QS_Former, RelationNet, MatchingNet, ProtoNet, CosineClassifier, SA_CovaMNet, CovarianceNet_64
+from survey_net.mf_net import MFNet
+from survey_net.ensemble_net import EnsembleNet
 from sklearn.metrics import confusion_matrix
 import argparse
 import torch.nn as nn
@@ -213,8 +216,8 @@ def train_and_test_model(net,
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
     loss1.to(device)
     full_loss = []
-    full_metric = {'full_acc' :[], 'full_presision': [], 'full_recall': []}
-    pred_metric = {'pred_acc': 0, 'pred_presision': 0, 'pred_recall': 0}    
+    full_metric = {'full_acc' :[], 'full_f1': [], 'full_recall': []}
+    pred_metric = {'pred_acc': 0, 'pred_f1': 0, 'pred_recall': 0}    
 
     cumulative_time = 0
 
@@ -252,25 +255,25 @@ def train_and_test_model(net,
             total_loss = running_loss / num_batches
             full_loss.append(total_loss)
             print('------------Testing on the test set-------------')
-            acc, pre, recall = cal_metrics_fewshot(test_loader, net, device)
+            acc, f1, recall = cal_metrics_fewshot(test_loader, net, device)
             full_metric['full_acc'].append(acc)
-            full_metric['full_presision'].append(pre)
+            full_metric['full_f1'].append(f1)
             full_metric['full_recall'].append(recall)
             print(f'Accuracy on the test set: {acc:.4f}')
-            print(f'Presision on the test set: {pre:.4f}')
+            print(f'F1_score on the test set: {f1:.4f}')
             print(f'Recall on the test set: {recall:.4f}')
-            if acc > pred_metric['pred_acc'] and pre > pred_metric['pred_presision'] and recall > pred_metric['pred_recall']:
+            if acc > pred_metric['pred_acc']:
                 if epoch >= 2:
                     os.remove(path_weight + model_name)
                 pred_metric['pred_acc'] = acc
-                pred_metric['pred_presision'] = pre
+                pred_metric['pred_f1'] = f1
                 pred_metric['pred_recall'] = recall
                 model_name = f'{args.model_name}_1shot_{acc:.4f}_{training_samples}samples.pth'
                 torch.save(net, path_weight + model_name)
                 print(f'=> Save the best model with accuracy: {acc:.4f}')
         torch.cuda.empty_cache()
 
-    return full_loss, full_metric, model_name, pred_metric['pred_acc'], pred_metric['pred_presision'], pred_metric['pred_recall']
+    return full_loss, full_metric, model_name, pred_metric['pred_acc'], pred_metric['pred_f1'], pred_metric['pred_recall']
 
 
 #----------------------------------------------------Training phase--------------------------------------------------#
@@ -278,43 +281,49 @@ seed_func()
 print("train or val:")
 if args.train_mode:
 #   net = MainNet()
-    net = CovarianceNet_64()
-    net = net.to(args.device)
-    print('training.........................!!')
-    if args.dataset == 'CWRU':
-        _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
-                            train_dataloader = train_dataloader_CWRU,
-                            test_loader = test_dataloader_CWRU,
-                            training_samples = args.training_samples_CWRU,
-                            num_epochs = args.num_epochs,
-                            lr = args.lr,
-                            loss1 = args.loss1,
-                            path_weight = args.path_weights,
-                            num_samples = args.training_samples_CWRU)
-    elif args.dataset == 'PDB':
-        _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
-                            train_dataloader = train_dataloader_PDB,
-                            test_loader = test_dataloader_PDB,
-                            training_samples = args.training_samples_PDB,
-                            num_epochs = args.num_epochs,
-                            lr = args.lr,
-                            loss1 = args.loss1,
-                            path_weight = args.path_weights,
-                            num_samples = args.training_samples_PDB)
+    # net = CovarianceNet_64()
+    model_name = ['QS_Former', 'RelationNet', 'MatchingNet', 'ProtoNet', 'CosineClassifier', 'SA_CovaMNet', 'CovarianceNet_64', 'MFNet', 'EnsembleNet']
+    models = [QS_Former(), RelationNet(), MatchingNet(), ProtoNet(), CosineClassifier(), SA_CovaMNet(), CovarianceNet_64(), MFNet(), EnsembleNet()]
+    
+    for i, net in enumerate(models):
+        net = net.to(args.device)
+        args.model_name = model_name[i] 
 
-    elif args.dataset == 'HUST_bearing':
-        print("Training with HUST bearing dataset....")
-        _,_,model_name, acc, vec_q, vec_s = train_and_test_model(net,
-                            train_dataloader = train_dataloader_HUST,
-                            test_loader = test_dataloader_HUST,
-                            training_samples = args.training_samples_HUST,
-                            num_epochs = args.num_epochs,
-                            lr = args.lr,
-                            loss1 = args.loss1,
-                            path_weight = args.path_weights,
-                            num_samples = args.training_samples_HUST)    
+        print('training.........................!!')
+        if args.dataset == 'CWRU':
+            _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
+                                train_dataloader = train_dataloader_CWRU,
+                                test_loader = test_dataloader_CWRU,
+                                training_samples = args.training_samples_CWRU,
+                                num_epochs = args.num_epochs,
+                                lr = args.lr,
+                                loss1 = args.loss1,
+                                path_weight = args.path_weights,
+                                num_samples = args.training_samples_CWRU)
+        elif args.dataset == 'PDB':
+            _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
+                                train_dataloader = train_dataloader_PDB,
+                                test_loader = test_dataloader_PDB,
+                                training_samples = args.training_samples_PDB,
+                                num_epochs = args.num_epochs,
+                                lr = args.lr,
+                                loss1 = args.loss1,
+                                path_weight = args.path_weights,
+                                num_samples = args.training_samples_PDB)
 
-    print('end training...................!!')
+        elif args.dataset == 'HUST_bearing':
+            print("Training with HUST bearing dataset....")
+            _,_,model_name, acc, vec_q, vec_s = train_and_test_model(net,
+                                train_dataloader = train_dataloader_HUST,
+                                test_loader = test_dataloader_HUST,
+                                training_samples = args.training_samples_HUST,
+                                num_epochs = args.num_epochs,
+                                lr = args.lr,
+                                loss1 = args.loss1,
+                                path_weight = args.path_weights,
+                                num_samples = args.training_samples_HUST)    
+
+        print('end training...................!!')
 
 if args.cfs_matrix:
     print("validating...")
@@ -339,7 +348,7 @@ if args.cfs_matrix:
 
 
     # net = MainNet()
-    net = CovarianceNet_64()    
+    # net = net.to(args.device)
   
     saved_weights_path = f"{args.path_weights}{model_name}"
     net = torch.load(saved_weights_path)
