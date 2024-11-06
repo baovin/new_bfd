@@ -213,4 +213,7 @@ def cal_metrics_fewshot(loader, net, device):
     precision = sum(precision_dict.values()) / len(precision_dict)
     recall = sum(recall_dict.values()) / len(recall_dict)     
     accuracy = sum(dict_tp.values()) / num_batches
-    return accuracy, precision, recall 
+
+    f1_score = (precision * recall * 2) / (precision + recall + 1e-6)
+
+    return accuracy, f1_score, recall 
