@@ -14,7 +14,10 @@ import os
 from HUST_bearing.HUST_dataset import HUSTbearing
 from dataloader.dataloader import FewshotDataset
 from torch.utils.data import DataLoader
-from net.new_proposed import MainNet, Baseline
+# from net.new_proposed import MainNet, Baseline
+from survey_net.model import QS_Former, RelationNet, MatchingNet, ProtoNet, CosineClassifier, SA_CovaMNet, CovarianceNet_64
+from survey_net.mf_net import MFNet
+from survey_net.ensemble_net import Ensemble_Net
 from sklearn.metrics import confusion_matrix
 import argparse
 import torch.nn as nn
