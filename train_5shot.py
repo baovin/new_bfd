@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 import function.function as function
 import time
 from tqdm import tqdm
-from function.function import  cal_accuracy_fewshot_5shot, predicted_fewshot, ContrastiveLoss, seed_func, cal_accuracy_fewshot, convert_for_5shots, predicted_fewshot_5shot
+from function.function import  cal_accuracy_fewshot_5shot, predicted_fewshot, ContrastiveLoss, seed_func, cal_accuracy_fewshot, convert_for_5shots, predicted_fewshot_5shot, cal_metrics_5shot
 from CWRU.CWRU_dataset import CWRU
 import os
 from HUST_bearing.HUST_dataset import HUSTbearing
@@ -211,8 +211,8 @@ def train_and_test_model(net,
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
     loss1.to(device)
     full_loss = []
-    full_acc = []
-    pred_acc = 0
+    full_metric = {'full_acc' :[], 'full_f1': [], 'full_recall': []}
+    pred_metric = {'pred_acc': 0, 'pred_f1': 0, 'pred_recall': 0}    
 
     cumulative_time = 0
 
@@ -250,20 +250,25 @@ def train_and_test_model(net,
             total_loss = running_loss / num_batches
             full_loss.append(total_loss)
             print('------------Testing on the test set-------------')
-            acc, vec_q, vec_s = cal_accuracy_fewshot_5shot(test_loader, net, device)
-            full_acc.append(acc)
+            acc, f1, recall = cal_metrics_5shot(test_loader, net, device)
+            full_metric['full_acc'].append(acc)
+            full_metric['full_f1'].append(f1)
+            full_metric['full_recall'].append(recall)
             print(f'Accuracy on the test set: {acc:.4f}')
-            if acc > pred_acc:
+            print(f'F1_score on the test set: {f1:.4f}')
+            print(f'Recall on the test set: {recall:.4f}')
+            if acc > pred_metric['pred_acc']:
                 if epoch >= 2:
                     os.remove(path_weight + model_name)
-                pred_acc = acc
-                model_name = f'{args.model_name}_5shot_{acc:.4f}_{training_samples}samples.pth'
+                pred_metric['pred_acc'] = acc
+                pred_metric['pred_f1'] = f1
+                pred_metric['pred_recall'] = recall
+                model_name = f'{args.model_name}_1shot_f1_{f1:.4f}_recall_{recall:.4f}_{training_samples}samples.pth'
                 torch.save(net, path_weight + model_name)
                 print(f'=> Save the best model with accuracy: {acc:.4f}')
         torch.cuda.empty_cache()
 
-    return full_loss, full_acc, model_name, acc, vec_q, vec_s
-
+    return full_loss, full_metric, model_name, pred_metric['pred_acc'], pred_metric['pred_f1'], pred_metric['pred_recall']
 
 #----------------------------------------------------Training phase--------------------------------------------------#
 seed_func()
