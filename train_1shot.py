@@ -268,7 +268,7 @@ def train_and_test_model(net,
                 pred_metric['pred_acc'] = acc
                 pred_metric['pred_f1'] = f1
                 pred_metric['pred_recall'] = recall
-                model_name = f'{args.model_name}_1shot_f1_{f1:.4f}_recall_{recall:.4f}_{training_samples}samples.pth'
+                model_name = f'{args.model_name}_1shot_recall_{recall:.4f}_{training_samples}samples.pth'
                 torch.save(net, path_weight + model_name)
                 print(f'=> Save the best model with accuracy: {acc:.4f}')
         torch.cuda.empty_cache()
