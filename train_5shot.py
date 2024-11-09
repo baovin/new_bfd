@@ -208,7 +208,8 @@ def train_and_test_model(net,
                          lr = args.lr,
                          loss1 = args.loss1,
                          path_weight = args.path_weights,
-                         num_samples = args.training_samples_HUST):
+                         num_samples = args.training_samples_HUST,
+                         num_classes = args.way_num_HUST):
     device = args.device
     optimizer = optim.Adam(net.parameters(), lr=lr)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
@@ -253,7 +254,7 @@ def train_and_test_model(net,
             total_loss = running_loss / num_batches
             full_loss.append(total_loss)
             print('------------Testing on the test set-------------')
-            acc, f1, recall = cal_metrics_5shot(test_loader, net, device)
+            acc, f1, recall = cal_metrics_5shot(test_loader, net, device, num_classes)
             full_metric['full_acc'].append(acc)
             full_metric['full_f1'].append(f1)
             full_metric['full_recall'].append(recall)
@@ -289,7 +290,8 @@ if args.train_mode:
                         lr = args.lr,
                         loss1 = args.loss1,
                         path_weight = args.path_weights,
-                        num_samples = args.training_samples_CWRU)
+                        num_samples = args.training_samples_CWRU,
+                        num_classes = args.way_num_CWRU)
   elif args.dataset == 'PDB':
     _,_,model_name, acc, vec_q, vec_s =  train_and_test_model(net,
                         train_dataloader = train_dataloader_PDB,
@@ -299,7 +301,8 @@ if args.train_mode:
                         lr = args.lr,
                         loss1 = args.loss1,
                         path_weight = args.path_weights,
-                        num_samples = args.training_samples_PDB)
+                        num_samples = args.training_samples_PDB,
+                        num_classes = args.way_num_PDB)
     
   elif args.dataset == 'HUST_bearing':
     print("Training with HUST bearing dataset in case of 5 shot....")
@@ -311,7 +314,8 @@ if args.train_mode:
                         lr = args.lr,
                         loss1 = args.loss1,
                         path_weight = args.path_weights,
-                        num_samples = args.training_samples_HUST)    
+                        num_samples = args.training_samples_HUST,
+                        num_classes = args.way_num_HUST)    
 
   print('end training...................!!')
 
