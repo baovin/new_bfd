@@ -164,10 +164,10 @@ def print_model_layers(model):
 
 
  #-------------------evaluation metrics-------------------------------------
-def cal_metrics_5shot(loader, net, device):
-    dict_tp = {i: 0 for i in range(10)}
-    dict_fp = {i: 0 for i in range(10)}
-    dict_fn = {i: 0 for i in range(10)}
+def cal_metrics_5shot(loader, net, device, num_classes):
+    dict_tp = {i: 0 for i in range(num_classes)}
+    dict_fp = {i: 0 for i in range(num_classes)}
+    dict_fn = {i: 0 for i in range(num_classes)}
 
     num_batches = 0
 
@@ -217,10 +217,10 @@ def cal_metrics_5shot(loader, net, device):
     return accuracy, f1_score, recall
 
 
-def cal_metrics_fewshot(loader, net, device):
-    dict_tp = {i: 0 for i in range(10)}
-    dict_fp = {i: 0 for i in range(10)}
-    dict_fn = {i: 0 for i in range(10)}
+def cal_metrics_fewshot(loader, net, device, num_classes):
+    dict_tp = {i: 0 for i in range(num_classes)}
+    dict_fp = {i: 0 for i in range(num_classes)}
+    dict_fn = {i: 0 for i in range(num_classes)}
 
     num_batches = 0
 
